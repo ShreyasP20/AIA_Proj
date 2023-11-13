@@ -10,7 +10,7 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.stem import PorterStemmer
 import os
-nltk.download('stopwords')
+
 os.environ['CLASSPATH']='D:\\stanford-parser-full-2018-02-27'
 inputString = " "
 java_path = "C:\\Program Files\\Java\\jdk-9.0.4\\bin\\java.exe"
