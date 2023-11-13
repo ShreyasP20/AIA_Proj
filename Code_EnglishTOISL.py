@@ -10,18 +10,22 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.stem import PorterStemmer
 import os
+import warnings
 
 os.environ['CLASSPATH']='D:\\stanford-parser-full-2018-02-27'
 inputString = " "
 java_path = "C:\\Program Files\\Java\\jdk-9.0.4\\bin\\java.exe"
 os.environ['JAVAHOME'] = java_path
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 for each in range(1,len(sys.argv)):
     inputString += sys.argv[each]
     inputString += " "
 
 inputString = input("Enter the String to convert to ISL: ")
 parser=StanfordParser(model_path='D:\\stanford-parser-full-2018-02-27\\edu\\stanford\\nlp\\models\\lexparser\\englishPCFG.ser.gz')
-# o=parser.parse(s.split())
+s = inputString
+o=parser.parse(s.split())
 englishtree=[tree for tree in parser.parse(inputString.split())]
 parsetree=englishtree[0]
 dict={}
@@ -70,7 +74,7 @@ for w in parsed_sent:
     lemmatized_words.append(lemmatizer.lemmatize(w))
     
 islsentence = ""
-print(lemmatized_words)
+#print(lemmatized_words)
 for w in lemmatized_words:
     if w not in stop_words:
         islsentence+=w
