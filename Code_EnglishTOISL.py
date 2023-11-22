@@ -74,7 +74,7 @@ for w in parsed_sent:
     lemmatized_words.append(lemmatizer.lemmatize(w))
     
 islsentence = ""
-print(lemmatized_words)
+#print(lemmatized_words)
 for w in lemmatized_words:
     if w not in stop_words:
         islsentence+=w
