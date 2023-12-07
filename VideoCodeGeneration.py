@@ -15,7 +15,7 @@ try:
 except:
     pass
 print(sys.path)
-name="Go To University"
+name="Monkey eat banana"
 
 for each in range(1,len(sys.argv)):
     name+=sys.argv[each]
