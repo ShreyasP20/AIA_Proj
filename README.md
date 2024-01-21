@@ -18,8 +18,8 @@ The script relies on several Python libraries and external tools. Make sure you 
 1. **Clone the Repository**
 
     ```bash
-    git clone https://github.com/your-username/nlp-islt.git
-    cd nlp-islt
+    git clone https://github.com/ShreyasP20/AIA_Proj.git
+    cd AIA_Proj
     ```
 
 2. **Install Dependencies**
@@ -70,5 +70,6 @@ The script relies on several Python libraries and external tools. Make sure you 
 
 
 - The script may require modifications based on changes in external libraries or website structures.
+- Standford Parser is needed to be downloaded from there officical website. (stanford-parser-full-2018-02-27)
 
 Feel free to explore and modify the script according to your requirements!
