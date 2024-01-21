@@ -1,1 +1,2 @@
-os.environ['CLASSPATH']='D:\\stanford-parser-full-2018-02-27'
+final_clip = concatenate_videoclips(arg_array)
+# final_clip.write_videofile("my_concatenation.mp4")

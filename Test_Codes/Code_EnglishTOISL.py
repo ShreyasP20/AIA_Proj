@@ -70,7 +70,7 @@ ps = PorterStemmer()
 lemmatized_words=[]
 
 for w in parsed_sent:
-    #w = ps.stem(w)
+    w = ps.stem(w)
     lemmatized_words.append(lemmatizer.lemmatize(w))
     
 islsentence = ""
