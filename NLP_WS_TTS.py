@@ -2,7 +2,6 @@ from nltk.parse.stanford import StanfordDependencyParser
 import numpy as np
 import cv2
 import imageio
-imageio.plugins.ffmpeg.download()
 from moviepy.editor import VideoFileClip, concatenate_videoclips, AudioFileClip
 import nltk
 import os
@@ -23,49 +22,7 @@ from pytube import YouTube
 from urllib.error import HTTPError
 import pyttsx3
 
-def download_youtube_video(embedded_url, output_path):
-    try:
-        yt = YouTube(embedded_url)
-
-        video_stream = yt.streams.get_highest_resolution()
-
-        video_stream.download(output_path)
-
-        print("Video downloaded successfully!")
-
-    except HTTPError as e:
-        if e.code == 410:
-            print("Error: Video is no longer available (HTTP Error 410: Gone)")
-        else:
-            print(f"HTTP Error: {e}")
-
-
-def add_audio_to_video(video_path, audio_path, output_path):
-    video_clip = VideoFileClip(video_path)
-
-    audio_clip = AudioFileClip(audio_path)
-
-    video_clip = video_clip.set_audio(audio_clip)
-
-    video_clip.write_videofile(output_path)
-
-
-
-engine = pyttsx3.init()
-
-rate = engine.getProperty('rate')
-engine.setProperty('rate', rate - 50)  
-
-volume = engine.getProperty('volume')
-engine.setProperty('volume', 0.9)  
-
-
-engine.setProperty('pitch', 0.8) 
-
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)
-
-
+# Define headers and paths
 output_path = "D:\\Shreyas_Codez\\AIA_Proj"
 headers = {
     'authority': 'indiansignlanguage.org',
@@ -76,139 +33,121 @@ headers = {
     'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
-os.environ['CLASSPATH']='D:\\stanford-parser-full-2018-02-27'
-inputString = " "
-java_path = "C:\\Program Files\\Java\\jdk-9.0.4\\bin\\java.exe"
-os.environ['JAVAHOME'] = java_path
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-for each in range(1,len(sys.argv)):
-    inputString += sys.argv[each]
-    inputString += " "
+# Download function with try-except for handling HTTPError
+def download_youtube_video(embedded_url, output_path):
+    try:
+        yt = YouTube(embedded_url)
+        video_stream = yt.streams.get_highest_resolution()
+        video_stream.download(output_path)
+        print("Video downloaded successfully!")
+    except HTTPError as e:
+        if e.code == 410:
+            print("Error: Video is no longer available (HTTP Error 410: Gone)")
+        else:
+            print(f"HTTP Error: {e}")
+    except Exception as e:
+        print(f"Error downloading video: {e}")
 
+# Add audio to video function
+def add_audio_to_video(video_path, audio_path, output_path):
+    try:
+        video_clip = VideoFileClip(video_path)
+        audio_clip = AudioFileClip(audio_path)
+        video_clip = video_clip.set_audio(audio_clip)
+        video_clip.write_videofile(output_path)
+    except Exception as e:
+        print(f"Error adding audio to video: {e}")
+
+# Text-to-speech engine setup
+engine = pyttsx3.init()
+engine.setProperty('rate', engine.getProperty('rate') - 50)
+engine.setProperty('volume', 0.9)
+engine.setProperty('voice', engine.getProperty('voices')[1].id)
+
+# Prepare input and setup Stanford Parser
 inputString = input("Enter the String to convert to ISL: ")
-parser=StanfordParser(model_path='D:\\stanford-parser-full-2018-02-27\\edu\\stanford\\nlp\\models\\lexparser\\englishPCFG.ser.gz')
-s = inputString
-o=parser.parse(s.split())
-englishtree=[tree for tree in parser.parse(inputString.split())]
-parsetree=englishtree[0]
-dict={}
-# "***********subtrees**********"
-parenttree= ParentedTree.convert(parsetree)
-for sub in parenttree.subtrees():
-    dict[sub.treeposition()]=0
+try:
+    parser = StanfordParser(model_path='D:\\stanford-parser-full-2018-02-27\\edu\\stanford\\nlp\\models\\lexparser\\englishPCFG.ser.gz')
+    englishtree = [tree for tree in parser.parse(inputString.split())]
+    parenttree = ParentedTree.convert(englishtree[0])
+except Exception as e:
+    print(f"Error initializing parser: {e}")
 
-#"----------------------------------------------"
-isltree=Tree('ROOT',[])
-i=0
-for sub in parenttree.subtrees():
-    if(sub.label()=="NP" and dict[sub.treeposition()]==0 and dict[sub.parent().treeposition()]==0):
-        dict[sub.treeposition()]=1
-        isltree.insert(i,sub)
-        i=i+1
-        
-    if(sub.label()=="VP" or sub.label()=="PRP"):
-        for sub2 in sub.subtrees():
-            if((sub2.label()=="NP" or sub2.label()=='PRP')and dict[sub2.treeposition()]==0 and  dict[sub2.parent().treeposition()]==0):
-                dict[sub2.treeposition()]=1
-                isltree.insert(i,sub2)
-                i=i+1
-                
-for sub in parenttree.subtrees():
-    for sub2 in sub.subtrees():
-        if(len(sub2.leaves())==1 and dict[sub2.treeposition()]==0 and dict[sub2.parent().treeposition()]==0):
-            dict[sub2.treeposition()]=1
-            isltree.insert(i,sub2)
-            i=i+1
-            
-parsed_sent=isltree.leaves()
-words=parsed_sent
-stop_words=set(stopwords.words("english"))
+# ISL parsing and sentence construction
+dict = {sub.treeposition(): 0 for sub in parenttree.subtrees()}
+isltree = Tree('ROOT', [])
+i = 0
 
+# Construct ISL tree and parsed sentence
+for sub in parenttree.subtrees():
+    if sub.label() in {"NP", "VP", "PRP"} and dict[sub.treeposition()] == 0:
+        dict[sub.treeposition()] = 1
+        isltree.insert(i, sub)
+        i += 1
 
+parsed_sent = isltree.leaves()
+stop_words = set(stopwords.words("english"))
 lemmatizer = WordNetLemmatizer()
 ps = PorterStemmer()
-lemmatized_words=[]
-
-for w in parsed_sent:
-    w=ps.stem(w)
-    lemmatized_words.append(lemmatizer.lemmatize(w))
-    
-islsentence = ""
-for w in lemmatized_words:
-    if w not in stop_words:
-        islsentence+=w
-        islsentence+=" "
-        
+lemmatized_words = [lemmatizer.lemmatize(ps.stem(w)) for w in parsed_sent if w not in stop_words]
+islsentence = " ".join(lemmatized_words)
 print(islsentence)
 
-
-try:
-    os.remove("video.mp4")
-    os.remove("Final.mp4")
-except:
-    pass
-print(sys.path)
-name=islsentence
-
-for each in range(1,len(sys.argv)):
-    name+=sys.argv[each]
-    name+=" "
-    
-input_text=name
-text = nltk.word_tokenize(input_text)
-result=nltk.pos_tag(text)
-for each in result:
-    print(each[0])
-    url = f'https://indiansignlanguage.org/{each[0]}/'  
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        iframe_tag = soup.find('iframe')
-        
-        if iframe_tag:
-            embedded_link = iframe_tag.get('src')
-
-            if embedded_link:
-                print(f'Embedded Link: {embedded_link}')
-                download_youtube_video(embedded_link,output_path)
-                
-            else:
-                print('No src attribute found in the <iframe> tag.')
-        else:
-            print('No <iframe> tag found on the page.')
-    else:
-        print(f'Request failed with status code: {response.status_code}')
-        if response.status_code == 403:
-            print('Replace the Cookie header with new Cookie')
-
-
-dict={}
-dict["NN"]="noun"
-arg_array=[]
-for text in result:
-    arg_array.append(VideoFileClip(text[0]+".mp4"))
-    print(text[0]+".mp4")
-
-# print(arg_array[0])
-
-final_clip = concatenate_videoclips(arg_array)
-final_clip.write_videofile("video.mp4")
-
-for words in result:
+# Remove temporary files with try-except
+for filename in ["video.mp4", "Final.mp4"]:
     try:
-        os.remove(f"{words[0]}.mp4")
-    except:
+        os.remove(filename)
+    except FileNotFoundError:
         pass
-    
 
-engine.save_to_file(f"Translation for:{inputString}", "audio.mp3")
-engine.runAndWait()
+# Data sourcing and video concatenation with try-except
+for each_word in lemmatized_words:
+    url = f'https://indiansignlanguage.org/{each_word}/'
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            iframe_tag = soup.find('iframe')
+            if iframe_tag and (embedded_link := iframe_tag.get('src')):
+                print(f'Embedded Link: {embedded_link}')
+                download_youtube_video(embedded_link, output_path)
+            else:
+                print(f"No video found for {each_word}.")
+        else:
+            print(f"Request failed for {each_word} with status code: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"Error fetching video for {each_word}: {e}")
 
-add_audio_to_video('video.mp4', 'audio.mp3', 'Final.mp4')
-
+# Concatenate videos
+arg_array = []
 try:
-    os.remove("audio.mp3")
-except:
-    pass
-     
+    for word in lemmatized_words:
+        clip = VideoFileClip(f"{output_path}\\{word}.mp4")
+        arg_array.append(clip)
+    final_clip = concatenate_videoclips(arg_array)
+    final_clip.write_videofile("video.mp4")
+except FileNotFoundError as e:
+    print(f"Error in video file processing: {e}")
+
+# Clean up downloaded files
+for word in lemmatized_words:
+    try:
+        os.remove(f"{output_path}\\{word}.mp4")
+    except FileNotFoundError:
+        pass
+
+# TTS conversion to audio and adding audio to video
+try:
+    engine.save_to_file(f"Translation for: {inputString}", "audio.mp3")
+    engine.runAndWait()
+    add_audio_to_video("video.mp4", "audio.mp3", "Final.mp4")
+except Exception as e:
+    print(f"Error in audio processing or adding to video: {e}")
+
+# Clean up final temporary files
+for filename in ["audio.mp3"]:
+    try:
+        os.remove(filename)
+    except FileNotFoundError:
+        pass
